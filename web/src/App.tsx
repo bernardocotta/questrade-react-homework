@@ -1,7 +1,10 @@
 import {
   Box,
+  Card,
+  CardContent,
   CircularProgress,
   Fab,
+  Grid,
   IconButton,
   Modal,
   Snackbar,
@@ -14,10 +17,11 @@ import AddIcon from '@mui/icons-material/Add';
 import CasinoIcon from '@mui/icons-material/Casino';
 import CloseIcon from '@mui/icons-material/Close';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
+import SyncIcon from '@mui/icons-material/Sync';
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
 import * as yup from 'yup';
-import { getLotteries } from './api';
+import { getLotteries, postLottery } from './api';
 import type { Lottery } from './api/types';
 
 const style = {
@@ -52,25 +56,33 @@ function App() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  useEffect(() => {
-    getLotteries().then(({ data }) => {
-      setTimeout(() => {
-        setLotteries(data);
-        setLoading(false);
-      }, 1000);
+  const loadLotteries = React.useCallback((): Promise<void> => {
+    return getLotteries().then(({ data }) => {
+      setLotteries(data);
+      setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    loadLotteries();
+  }, [loadLotteries]);
 
   const formik = useFormik({
     initialValues: { lotteryName: '', lotteryPrize: '' },
     validationSchema,
     validateOnMount: true,
-    onSubmit: async (_values, { resetForm, setSubmitting }) => {
-      await new Promise((r) => setTimeout(r, 1000));
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
+      await postLottery({
+        name: values.lotteryName,
+        prize: values.lotteryPrize,
+        type: 'simple',
+      });
       resetForm();
       handleClose();
       setSubmitting(false);
       setOpenNewLotteryNotification(true);
+      setLoading(true);
+      await loadLotteries();
     },
   });
 
@@ -96,6 +108,50 @@ function App() {
               There are no lotteries currently
             </Typography>
           </Stack>
+        )}
+        {!loading && lotteries.length > 0 && (
+          <Grid
+            container
+            spacing={2}
+            sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}
+          >
+            {lotteries.map((lottery) => (
+              <Grid key={lottery.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                <Card elevation={1} sx={{ borderRadius: 2 }}>
+                  <CardContent
+                    sx={{ position: 'relative', pr: 5, pt: 2, pb: 2 }}
+                  >
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 16,
+                        right: 16,
+                      }}
+                    >
+                      <SyncIcon fontSize="small" color="action" />
+                    </Box>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {lottery.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {lottery.prize}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      component="code"
+                      sx={{
+                        fontFamily: 'monospace',
+                        display: 'block',
+                        mt: 0.5,
+                      }}
+                    >
+                      {lottery.id}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
         )}
       </Box>
 

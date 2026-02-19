@@ -9,4 +9,12 @@ export const getLotteries = async () => {
   return await apiClient.get<Lottery[]>('/lotteries');
 };
 
+export const postLottery = async (body: {
+  name: string;
+  prize: string;
+  type: string;
+}) => {
+  return await apiClient.post<Lottery>('/lotteries', body);
+};
+
 export default apiClient;
