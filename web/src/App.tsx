@@ -1,5 +1,6 @@
 import {
   Box,
+  CircularProgress,
   Fab,
   IconButton,
   Modal,
@@ -7,22 +8,25 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
-import AddIcon from "@mui/icons-material/Add";
-import CasinoIcon from "@mui/icons-material/Casino";
-import CloseIcon from "@mui/icons-material/Close";
-import { useFormik } from "formik";
-import React from "react";
-import * as yup from "yup";
+} from '@mui/material';
+import LoadingButton from '@mui/lab/LoadingButton';
+import AddIcon from '@mui/icons-material/Add';
+import CasinoIcon from '@mui/icons-material/Casino';
+import CloseIcon from '@mui/icons-material/Close';
+import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
+import { useFormik } from 'formik';
+import React, { useEffect } from 'react';
+import * as yup from 'yup';
+import { getLotteries } from './api';
+import type { Lottery } from './api/types';
 
 const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
   width: 400,
-  bgcolor: "background.paper",
+  bgcolor: 'background.paper',
   boxShadow: 24,
   p: 4,
   borderRadius: 2,
@@ -31,23 +35,34 @@ const style = {
 const validationSchema = yup.object({
   lotteryName: yup
     .string()
-    .required("Required")
-    .min(4, "At least 4 characters"),
+    .required('Required')
+    .min(4, 'At least 4 characters'),
   lotteryPrize: yup
     .string()
-    .required("Required")
-    .min(4, "At least 4 characters"),
+    .required('Required')
+    .min(4, 'At least 4 characters'),
 });
 
 function App() {
   const [open, setOpen] = React.useState(false);
   const [openNewLotteryNotification, setOpenNewLotteryNotification] =
     React.useState(false);
+  const [lotteries, setLotteries] = React.useState<Lottery[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  useEffect(() => {
+    getLotteries().then(({ data }) => {
+      setTimeout(() => {
+        setLotteries(data);
+        setLoading(false);
+      }, 1000);
+    });
+  }, []);
+
   const formik = useFormik({
-    initialValues: { lotteryName: "", lotteryPrize: "" },
+    initialValues: { lotteryName: '', lotteryPrize: '' },
     validationSchema,
     validateOnMount: true,
     onSubmit: async (_values, { resetForm, setSubmitting }) => {
@@ -61,11 +76,27 @@ function App() {
 
   return (
     <>
-      <Box sx={{ textAlign: "center", py: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ textAlign: 'center', py: 3 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+        >
           Loteries
           <CasinoIcon fontSize="large" />
         </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+        {loading && <CircularProgress />}
+        {!loading && lotteries.length === 0 && (
+          <Stack alignItems="center" spacing={1}>
+            <SentimentDissatisfiedIcon sx={{ fontSize: 48 }} />
+            <Typography color="text.secondary">
+              There are no lotteries currently
+            </Typography>
+          </Stack>
+        )}
       </Box>
 
       <Modal
@@ -109,7 +140,7 @@ function App() {
               variant="standard"
               fullWidth
             />
-            <Box sx={{ display: "flex", justifyContent: "flex-start", pt: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', pt: 1 }}>
               <LoadingButton
                 variant="contained"
                 color="primary"
@@ -128,7 +159,7 @@ function App() {
         variant="extended"
         color="primary"
         onClick={handleOpen}
-        sx={{ position: "fixed", bottom: 24, right: 24 }}
+        sx={{ position: 'fixed', bottom: 24, right: 24 }}
       >
         <AddIcon sx={{ mr: 1 }} />
         Add Lottery
