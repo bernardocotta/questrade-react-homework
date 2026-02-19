@@ -8,7 +8,9 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { useFormik } from "formik";
 import React from "react";
+import * as yup from "yup";
 
 const style = {
   position: "absolute",
@@ -22,12 +24,26 @@ const style = {
   borderRadius: 2,
 };
 
+const validationSchema = yup.object({
+  lotteryName: yup.string().required("Required").min(4, "At least 4 characters"),
+  lotteryPrize: yup.string().required("Required").min(4, "At least 4 characters"),
+});
+
 function App() {
   const [open, setOpen] = React.useState(false);
-  const [lotteryName, setLotteryName] = React.useState("");
-  const [lotteryPrize, setLotteryPrize] = React.useState("");
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const formik = useFormik({
+    initialValues: { lotteryName: "", lotteryPrize: "" },
+    validationSchema,
+    validateOnMount: true,
+    onSubmit: (_values, { resetForm }) => {
+      resetForm();
+      handleClose();
+    },
+  });
+
   return (
     <>
       <Modal
@@ -43,20 +59,43 @@ function App() {
             </Typography>
             <TextField
               label="Lottery name"
-              value={lotteryName}
-              onChange={(e) => setLotteryName(e.target.value)}
+              name="lotteryName"
+              value={formik.values.lotteryName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={
+                Boolean(formik.touched.lotteryName && formik.errors.lotteryName)
+              }
+              helperText={
+                formik.touched.lotteryName && formik.errors.lotteryName
+              }
               variant="standard"
               fullWidth
             />
             <TextField
               label="Lottery prize"
-              value={lotteryPrize}
-              onChange={(e) => setLotteryPrize(e.target.value)}
+              name="lotteryPrize"
+              value={formik.values.lotteryPrize}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={
+                Boolean(
+                  formik.touched.lotteryPrize && formik.errors.lotteryPrize
+                )
+              }
+              helperText={
+                formik.touched.lotteryPrize && formik.errors.lotteryPrize
+              }
               variant="standard"
               fullWidth
             />
             <Box sx={{ display: "flex", justifyContent: "flex-start", pt: 1 }}>
-              <Button variant="contained" color="primary" disabled={true}>
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={!formik.isValid || !formik.dirty}
+                onClick={() => formik.handleSubmit()}
+              >
                 Add
               </Button>
             </Box>
