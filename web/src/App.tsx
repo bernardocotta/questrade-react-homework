@@ -1,6 +1,16 @@
-import { Box, Fab, Modal, Stack, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Fab,
+  IconButton,
+  Modal,
+  Snackbar,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import { useFormik } from "formik";
 import React from "react";
 import * as yup from "yup";
@@ -30,6 +40,8 @@ const validationSchema = yup.object({
 
 function App() {
   const [open, setOpen] = React.useState(false);
+  const [openNewLotteryNotification, setOpenNewLotteryNotification] =
+    React.useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
@@ -42,6 +54,7 @@ function App() {
       resetForm();
       handleClose();
       setSubmitting(false);
+      setOpenNewLotteryNotification(true);
     },
   });
 
@@ -112,6 +125,23 @@ function App() {
         <AddIcon sx={{ mr: 1 }} />
         Add Lottery
       </Fab>
+
+      <Snackbar
+        open={openNewLotteryNotification}
+        autoHideDuration={6000}
+        onClose={() => setOpenNewLotteryNotification(false)}
+        message="New lottery created"
+        action={
+          <IconButton
+            size="small"
+            aria-label="close"
+            color="inherit"
+            onClick={() => setOpenNewLotteryNotification(false)}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        }
+      />
     </>
   );
 }
