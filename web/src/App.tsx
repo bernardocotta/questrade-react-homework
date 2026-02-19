@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import AddIcon from "@mui/icons-material/Add";
+import CasinoIcon from "@mui/icons-material/Casino";
 import CloseIcon from "@mui/icons-material/Close";
 import { useFormik } from "formik";
 import React from "react";
@@ -60,6 +61,13 @@ function App() {
 
   return (
     <>
+      <Box sx={{ textAlign: "center", py: 3 }}>
+        <Typography variant="h4" component="h1" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+          Loteries
+          <CasinoIcon fontSize="large" />
+        </Typography>
+      </Box>
+
       <Modal
         open={open}
         onClose={handleClose}
