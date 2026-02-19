@@ -1,12 +1,5 @@
-import {
-  Box,
-  Button,
-  Fab,
-  Modal,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Fab, Modal, Stack, TextField, Typography } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
 import AddIcon from "@mui/icons-material/Add";
 import { useFormik } from "formik";
 import React from "react";
@@ -25,8 +18,14 @@ const style = {
 };
 
 const validationSchema = yup.object({
-  lotteryName: yup.string().required("Required").min(4, "At least 4 characters"),
-  lotteryPrize: yup.string().required("Required").min(4, "At least 4 characters"),
+  lotteryName: yup
+    .string()
+    .required("Required")
+    .min(4, "At least 4 characters"),
+  lotteryPrize: yup
+    .string()
+    .required("Required")
+    .min(4, "At least 4 characters"),
 });
 
 function App() {
@@ -38,9 +37,11 @@ function App() {
     initialValues: { lotteryName: "", lotteryPrize: "" },
     validationSchema,
     validateOnMount: true,
-    onSubmit: (_values, { resetForm }) => {
+    onSubmit: async (_values, { resetForm, setSubmitting }) => {
+      await new Promise((r) => setTimeout(r, 1000));
       resetForm();
       handleClose();
+      setSubmitting(false);
     },
   });
 
@@ -63,9 +64,9 @@ function App() {
               value={formik.values.lotteryName}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={
-                Boolean(formik.touched.lotteryName && formik.errors.lotteryName)
-              }
+              error={Boolean(
+                formik.touched.lotteryName && formik.errors.lotteryName,
+              )}
               helperText={
                 formik.touched.lotteryName && formik.errors.lotteryName
               }
@@ -78,11 +79,9 @@ function App() {
               value={formik.values.lotteryPrize}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={
-                Boolean(
-                  formik.touched.lotteryPrize && formik.errors.lotteryPrize
-                )
-              }
+              error={Boolean(
+                formik.touched.lotteryPrize && formik.errors.lotteryPrize,
+              )}
               helperText={
                 formik.touched.lotteryPrize && formik.errors.lotteryPrize
               }
@@ -90,14 +89,15 @@ function App() {
               fullWidth
             />
             <Box sx={{ display: "flex", justifyContent: "flex-start", pt: 1 }}>
-              <Button
+              <LoadingButton
                 variant="contained"
                 color="primary"
                 disabled={!formik.isValid || !formik.dirty}
+                loading={formik.isSubmitting}
                 onClick={() => formik.handleSubmit()}
               >
                 Add
-              </Button>
+              </LoadingButton>
             </Box>
           </Stack>
         </Box>
