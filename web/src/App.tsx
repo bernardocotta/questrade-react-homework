@@ -6,6 +6,7 @@ import {
   Fab,
   Grid,
   IconButton,
+  InputAdornment,
   Modal,
   Snackbar,
   Stack,
@@ -16,6 +17,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import AddIcon from '@mui/icons-material/Add';
 import CasinoIcon from '@mui/icons-material/Casino';
 import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
 import SyncIcon from '@mui/icons-material/Sync';
 import { useFormik } from 'formik';
@@ -68,6 +70,7 @@ function App() {
     React.useState(false);
   const [registerNotificationMessage, setRegisterNotificationMessage] =
     React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   const loadLotteries = React.useCallback((): Promise<void> => {
     return getLotteries().then(({ data }) => {
@@ -134,6 +137,26 @@ function App() {
           <CasinoIcon fontSize="large" />
         </Typography>
       </Box>
+
+      {!loading && lotteries.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', px: 2, pb: 2 }}>
+          <TextField
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            variant="outlined"
+            size="small"
+            sx={{ width: '100%', maxWidth: 400 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <SearchIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+      )}
 
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
         {loading && <CircularProgress />}
@@ -290,7 +313,7 @@ function App() {
               onBlur={registerFormik.handleBlur}
               error={Boolean(
                 registerFormik.touched.registerName &&
-                  registerFormik.errors.registerName,
+                registerFormik.errors.registerName,
               )}
               helperText={
                 registerFormik.touched.registerName &&
