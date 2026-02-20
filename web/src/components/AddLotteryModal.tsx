@@ -1,10 +1,4 @@
-import {
-  Box,
-  Modal,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Modal, Stack, TextField, Typography } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
@@ -82,9 +76,7 @@ export function AddLotteryModal({
             error={Boolean(
               formik.touched.lotteryName && formik.errors.lotteryName,
             )}
-            helperText={
-              formik.touched.lotteryName && formik.errors.lotteryName
-            }
+            helperText={formik.touched.lotteryName && formik.errors.lotteryName}
             variant="standard"
             fullWidth
           />

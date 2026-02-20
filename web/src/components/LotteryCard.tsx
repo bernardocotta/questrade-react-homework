@@ -1,9 +1,4 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography } from '@mui/material';
 import SyncIcon from '@mui/icons-material/Sync';
 import type { Lottery } from '../api/types';
 
@@ -26,9 +21,7 @@ export function LotteryCard({ lottery, selected, onSelect }: LotteryCardProps) {
         cursor: 'pointer',
       }}
     >
-      <CardContent
-        sx={{ position: 'relative', pr: 5, pt: 2, pb: 2 }}
-      >
+      <CardContent sx={{ position: 'relative', pr: 5, pt: 2, pb: 2 }}>
         <Box
           sx={{
             position: 'absolute',
