@@ -1,7 +1,5 @@
 import {
   Box,
-  Card,
-  CardContent,
   CircularProgress,
   Fab,
   Grid,
@@ -19,12 +17,12 @@ import CasinoIcon from '@mui/icons-material/Casino';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
-import SyncIcon from '@mui/icons-material/Sync';
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
 import * as yup from 'yup';
 import { getLotteries, postLottery, postRegister } from './api';
 import type { Lottery } from './api/types';
+import { LotteryCard } from './components/LotteryCard';
 
 const style = {
   position: 'absolute',
@@ -131,6 +129,15 @@ function App() {
     },
   });
 
+  const handleToggleLottery = React.useCallback((id: string) => {
+    setSelectedLotteryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   return (
     <>
       <Box sx={{ textAlign: 'center', py: 3 }}>
@@ -182,62 +189,15 @@ function App() {
                 spacing={2}
                 sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}
               >
-                {filteredLotteries.map((lottery) => {
-              const isSelected = selectedLotteryIds.has(lottery.id);
-              return (
-                <Grid key={lottery.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Card
-                    variant="outlined"
-                    elevation={0}
-                    onClick={() => {
-                      setSelectedLotteryIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(lottery.id)) next.delete(lottery.id);
-                        else next.add(lottery.id);
-                        return next;
-                      });
-                    }}
-                    sx={{
-                      borderRadius: 2,
-                      borderWidth: 2,
-                      borderColor: isSelected ? 'primary.main' : 'grey.300',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <CardContent
-                      sx={{ position: 'relative', pr: 5, pt: 2, pb: 2 }}
-                    >
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 16,
-                          right: 16,
-                        }}
-                      >
-                        <SyncIcon fontSize="small" color="action" />
-                      </Box>
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {lottery.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {lottery.prize}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        component="code"
-                        sx={{
-                          fontFamily: 'monospace',
-                          display: 'block',
-                          mt: 0.5,
-                        }}
-                      >
-                        {lottery.id}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
+                {filteredLotteries.map((lottery) => (
+                  <Grid key={lottery.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <LotteryCard
+                      lottery={lottery}
+                      selected={selectedLotteryIds.has(lottery.id)}
+                      onSelect={() => handleToggleLottery(lottery.id)}
+                    />
+                  </Grid>
+                ))}
               </Grid>
             ) : (
               <Stack alignItems="center" spacing={1}>
