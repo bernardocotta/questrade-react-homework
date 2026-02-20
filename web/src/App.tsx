@@ -72,6 +72,12 @@ function App() {
     React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
 
+  const filteredLotteries = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return lotteries;
+    return lotteries.filter((l) => l.name.toLowerCase().includes(q));
+  }, [lotteries, searchQuery]);
+
   const loadLotteries = React.useCallback((): Promise<void> => {
     return getLotteries().then(({ data }) => {
       setLotteries(data);
@@ -169,12 +175,14 @@ function App() {
           </Stack>
         )}
         {!loading && lotteries.length > 0 && (
-          <Grid
-            container
-            spacing={2}
-            sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}
-          >
-            {lotteries.map((lottery) => {
+          <>
+            {filteredLotteries.length > 0 ? (
+              <Grid
+                container
+                spacing={2}
+                sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}
+              >
+                {filteredLotteries.map((lottery) => {
               const isSelected = selectedLotteryIds.has(lottery.id);
               return (
                 <Grid key={lottery.id} size={{ xs: 12, sm: 6, md: 4 }}>
@@ -230,7 +238,15 @@ function App() {
                 </Grid>
               );
             })}
-          </Grid>
+              </Grid>
+            ) : (
+              <Stack alignItems="center" spacing={1}>
+                <Typography color="text.secondary">
+                  No search results for &apos;{searchQuery.trim()}&apos;
+                </Typography>
+              </Stack>
+            )}
+          </>
         )}
       </Box>
 
