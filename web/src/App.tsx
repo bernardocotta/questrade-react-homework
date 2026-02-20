@@ -5,44 +5,22 @@ import {
   Grid,
   IconButton,
   InputAdornment,
-  Modal,
   Snackbar,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
 import AddIcon from '@mui/icons-material/Add';
 import CasinoIcon from '@mui/icons-material/Casino';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
-import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
-import * as yup from 'yup';
-import { getLotteries, postRegister } from './api';
+import { getLotteries } from './api';
 import type { Lottery } from './api/types';
 import { AddLotteryModal } from './components/AddLotteryModal';
 import { LotteryCard } from './components/LotteryCard';
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-  borderRadius: 2,
-};
-
-const registerValidationSchema = yup.object({
-  registerName: yup
-    .string()
-    .required('Required')
-    .min(3, 'At least 3 characters'),
-});
+import { RegisterModal } from './components/RegisterModal';
 
 function App() {
   const [newLotteryModalOpen, setNewLotteryModalOpen] = React.useState(false);
@@ -76,28 +54,6 @@ function App() {
   useEffect(() => {
     loadLotteries();
   }, [loadLotteries]);
-
-  const registerFormik = useFormik({
-    initialValues: { registerName: '' },
-    validationSchema: registerValidationSchema,
-    validateOnMount: true,
-    onSubmit: async (values, { resetForm, setSubmitting }) => {
-      const name = values.registerName.trim();
-      const ids = Array.from(selectedLotteryIds);
-      await Promise.all(
-        ids.map((lotteryId) => postRegister({ lotteryId, name })),
-      );
-      resetForm();
-      setRegisterModalOpen(false);
-      setSubmitting(false);
-      const n = ids.length;
-      setRegisterNotificationMessage(
-        n === 1 ? 'Registered for 1 lottery' : `Registered for ${n} lotteries`,
-      );
-      setOpenRegisterNotification(true);
-      setSelectedLotteryIds(new Set());
-    },
-  });
 
   const handleToggleLottery = React.useCallback((id: string) => {
     setSelectedLotteryIds((prev) => {
@@ -190,48 +146,16 @@ function App() {
         }}
       />
 
-      <Modal
+      <RegisterModal
         open={registerModalOpen}
         onClose={() => setRegisterModalOpen(false)}
-        aria-labelledby="register-modal-title"
-        aria-describedby="register-modal-description"
-      >
-        <Box sx={style}>
-          <Stack spacing={2}>
-            <Typography id="register-modal-title" variant="h6" component="h2">
-              Register for a lottery
-            </Typography>
-            <TextField
-              name="registerName"
-              placeholder="Enter your name"
-              value={registerFormik.values.registerName}
-              onChange={registerFormik.handleChange}
-              onBlur={registerFormik.handleBlur}
-              error={Boolean(
-                registerFormik.touched.registerName &&
-                registerFormik.errors.registerName,
-              )}
-              helperText={
-                registerFormik.touched.registerName &&
-                registerFormik.errors.registerName
-              }
-              variant="standard"
-              fullWidth
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', pt: 1 }}>
-              <LoadingButton
-                variant="contained"
-                color="primary"
-                disabled={!registerFormik.isValid}
-                loading={registerFormik.isSubmitting}
-                onClick={() => registerFormik.handleSubmit()}
-              >
-                REGISTER
-              </LoadingButton>
-            </Box>
-          </Stack>
-        </Box>
-      </Modal>
+        selectedLotteryIds={Array.from(selectedLotteryIds)}
+        onSuccess={(message) => {
+          setRegisterNotificationMessage(message);
+          setOpenRegisterNotification(true);
+          setSelectedLotteryIds(new Set());
+        }}
+      />
 
       <Box
         sx={{
