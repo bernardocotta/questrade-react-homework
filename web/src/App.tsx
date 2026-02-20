@@ -21,7 +21,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
 import * as yup from 'yup';
-import { getLotteries, postLottery } from './api';
+import { getLotteries, postLottery, postRegister } from './api';
 import type { Lottery } from './api/types';
 
 const style = {
@@ -47,14 +47,27 @@ const validationSchema = yup.object({
     .min(4, 'At least 4 characters'),
 });
 
+const registerValidationSchema = yup.object({
+  registerName: yup
+    .string()
+    .required('Required')
+    .min(3, 'At least 3 characters'),
+});
+
 function App() {
-  const [open, setOpen] = React.useState(false);
+  const [newLotteryModalOpen, setNewLotteryModalOpen] = React.useState(false);
   const [openNewLotteryNotification, setOpenNewLotteryNotification] =
     React.useState(false);
   const [lotteries, setLotteries] = React.useState<Lottery[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const [selectedLotteryIds, setSelectedLotteryIds] = React.useState<
+    Set<string>
+  >(new Set());
+  const [registerModalOpen, setRegisterModalOpen] = React.useState(false);
+  const [openRegisterNotification, setOpenRegisterNotification] =
+    React.useState(false);
+  const [registerNotificationMessage, setRegisterNotificationMessage] =
+    React.useState('');
 
   const loadLotteries = React.useCallback((): Promise<void> => {
     return getLotteries().then(({ data }) => {
@@ -67,7 +80,7 @@ function App() {
     loadLotteries();
   }, [loadLotteries]);
 
-  const formik = useFormik({
+  const lotteryFormik = useFormik({
     initialValues: { lotteryName: '', lotteryPrize: '' },
     validationSchema,
     validateOnMount: true,
@@ -78,11 +91,34 @@ function App() {
         type: 'simple',
       });
       resetForm();
-      handleClose();
+      setNewLotteryModalOpen(false);
       setSubmitting(false);
       setOpenNewLotteryNotification(true);
+
       setLoading(true);
       await loadLotteries();
+    },
+  });
+
+  const registerFormik = useFormik({
+    initialValues: { registerName: '' },
+    validationSchema: registerValidationSchema,
+    validateOnMount: true,
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
+      const name = values.registerName.trim();
+      const ids = Array.from(selectedLotteryIds);
+      await Promise.all(
+        ids.map((lotteryId) => postRegister({ lotteryId, name })),
+      );
+      resetForm();
+      setRegisterModalOpen(false);
+      setSubmitting(false);
+      const n = ids.length;
+      setRegisterNotificationMessage(
+        n === 1 ? 'Registered for 1 lottery' : `Registered for ${n} lotteries`,
+      );
+      setOpenRegisterNotification(true);
+      setSelectedLotteryIds(new Set());
     },
   });
 
@@ -115,49 +151,69 @@ function App() {
             spacing={2}
             sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}
           >
-            {lotteries.map((lottery) => (
-              <Grid key={lottery.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Card elevation={1} sx={{ borderRadius: 2 }}>
-                  <CardContent
-                    sx={{ position: 'relative', pr: 5, pt: 2, pb: 2 }}
+            {lotteries.map((lottery) => {
+              const isSelected = selectedLotteryIds.has(lottery.id);
+              return (
+                <Grid key={lottery.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Card
+                    variant="outlined"
+                    elevation={0}
+                    onClick={() => {
+                      setSelectedLotteryIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(lottery.id)) next.delete(lottery.id);
+                        else next.add(lottery.id);
+                        return next;
+                      });
+                    }}
+                    sx={{
+                      borderRadius: 2,
+                      borderWidth: 2,
+                      borderColor: isSelected ? 'primary.main' : 'grey.300',
+                      cursor: 'pointer',
+                    }}
                   >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 16,
-                        right: 16,
-                      }}
+                    <CardContent
+                      sx={{ position: 'relative', pr: 5, pt: 2, pb: 2 }}
                     >
-                      <SyncIcon fontSize="small" color="action" />
-                    </Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {lottery.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {lottery.prize}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      component="code"
-                      sx={{
-                        fontFamily: 'monospace',
-                        display: 'block',
-                        mt: 0.5,
-                      }}
-                    >
-                      {lottery.id}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 16,
+                          right: 16,
+                        }}
+                      >
+                        <SyncIcon fontSize="small" color="action" />
+                      </Box>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {lottery.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {lottery.prize}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        component="code"
+                        sx={{
+                          fontFamily: 'monospace',
+                          display: 'block',
+                          mt: 0.5,
+                        }}
+                      >
+                        {lottery.id}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         )}
       </Box>
 
       <Modal
-        open={open}
-        onClose={handleClose}
+        open={newLotteryModalOpen}
+        onClose={() => setNewLotteryModalOpen(false)}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
@@ -169,14 +225,16 @@ function App() {
             <TextField
               label="Lottery name"
               name="lotteryName"
-              value={formik.values.lotteryName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              value={lotteryFormik.values.lotteryName}
+              onChange={lotteryFormik.handleChange}
+              onBlur={lotteryFormik.handleBlur}
               error={Boolean(
-                formik.touched.lotteryName && formik.errors.lotteryName,
+                lotteryFormik.touched.lotteryName &&
+                lotteryFormik.errors.lotteryName,
               )}
               helperText={
-                formik.touched.lotteryName && formik.errors.lotteryName
+                lotteryFormik.touched.lotteryName &&
+                lotteryFormik.errors.lotteryName
               }
               variant="standard"
               fullWidth
@@ -184,14 +242,16 @@ function App() {
             <TextField
               label="Lottery prize"
               name="lotteryPrize"
-              value={formik.values.lotteryPrize}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              value={lotteryFormik.values.lotteryPrize}
+              onChange={lotteryFormik.handleChange}
+              onBlur={lotteryFormik.handleBlur}
               error={Boolean(
-                formik.touched.lotteryPrize && formik.errors.lotteryPrize,
+                lotteryFormik.touched.lotteryPrize &&
+                lotteryFormik.errors.lotteryPrize,
               )}
               helperText={
-                formik.touched.lotteryPrize && formik.errors.lotteryPrize
+                lotteryFormik.touched.lotteryPrize &&
+                lotteryFormik.errors.lotteryPrize
               }
               variant="standard"
               fullWidth
@@ -200,9 +260,9 @@ function App() {
               <LoadingButton
                 variant="contained"
                 color="primary"
-                disabled={!formik.isValid || !formik.dirty}
-                loading={formik.isSubmitting}
-                onClick={() => formik.handleSubmit()}
+                disabled={!lotteryFormik.isValid || !lotteryFormik.dirty}
+                loading={lotteryFormik.isSubmitting}
+                onClick={() => lotteryFormik.handleSubmit()}
               >
                 Add
               </LoadingButton>
@@ -211,15 +271,76 @@ function App() {
         </Box>
       </Modal>
 
-      <Fab
-        variant="extended"
-        color="primary"
-        onClick={handleOpen}
-        sx={{ position: 'fixed', bottom: 24, right: 24 }}
+      <Modal
+        open={registerModalOpen}
+        onClose={() => setRegisterModalOpen(false)}
+        aria-labelledby="register-modal-title"
+        aria-describedby="register-modal-description"
       >
-        <AddIcon sx={{ mr: 1 }} />
-        Add Lottery
-      </Fab>
+        <Box sx={style}>
+          <Stack spacing={2}>
+            <Typography id="register-modal-title" variant="h6" component="h2">
+              Register for a lottery
+            </Typography>
+            <TextField
+              name="registerName"
+              placeholder="Enter your name"
+              value={registerFormik.values.registerName}
+              onChange={registerFormik.handleChange}
+              onBlur={registerFormik.handleBlur}
+              error={Boolean(
+                registerFormik.touched.registerName &&
+                  registerFormik.errors.registerName,
+              )}
+              helperText={
+                registerFormik.touched.registerName &&
+                registerFormik.errors.registerName
+              }
+              variant="standard"
+              fullWidth
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', pt: 1 }}>
+              <LoadingButton
+                variant="contained"
+                color="primary"
+                disabled={!registerFormik.isValid}
+                loading={registerFormik.isSubmitting}
+                onClick={() => registerFormik.handleSubmit()}
+              >
+                REGISTER
+              </LoadingButton>
+            </Box>
+          </Stack>
+        </Box>
+      </Modal>
+
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 2,
+        }}
+      >
+        <Fab
+          variant="extended"
+          color="default"
+          disabled={selectedLotteryIds.size === 0}
+          onClick={() => setRegisterModalOpen(true)}
+        >
+          Register
+        </Fab>
+        <Fab
+          variant="extended"
+          color="primary"
+          onClick={() => setNewLotteryModalOpen(true)}
+        >
+          <AddIcon sx={{ mr: 1 }} />
+          Add Lottery
+        </Fab>
+      </Box>
 
       <Snackbar
         open={openNewLotteryNotification}
@@ -232,6 +353,22 @@ function App() {
             aria-label="close"
             color="inherit"
             onClick={() => setOpenNewLotteryNotification(false)}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        }
+      />
+      <Snackbar
+        open={openRegisterNotification}
+        autoHideDuration={6000}
+        onClose={() => setOpenRegisterNotification(false)}
+        message={registerNotificationMessage}
+        action={
+          <IconButton
+            size="small"
+            aria-label="close"
+            color="inherit"
+            onClick={() => setOpenRegisterNotification(false)}
           >
             <CloseIcon fontSize="small" />
           </IconButton>

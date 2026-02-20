@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Lottery } from './types';
+import type { Lottery, RegisterResponse } from './types';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -15,6 +15,13 @@ export const postLottery = async (body: {
   type: string;
 }) => {
   return await apiClient.post<Lottery>('/lotteries', body);
+};
+
+export const postRegister = async (body: {
+  lotteryId: string;
+  name: string;
+}) => {
+  return await apiClient.post<RegisterResponse>('/register', body);
 };
 
 export default apiClient;

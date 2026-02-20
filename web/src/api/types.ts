@@ -1,4 +1,4 @@
-export type Status = "running" | "finished";
+export type Status = 'running' | 'finished';
 
 export interface Lottery {
   id: string;
@@ -6,4 +6,8 @@ export interface Lottery {
   prize: string;
   type: string;
   status: Status;
+}
+
+export interface RegisterResponse {
+  status: 'Success' | 'Error';
 }
