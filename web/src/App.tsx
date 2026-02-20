@@ -86,12 +86,14 @@ function App() {
             variant="outlined"
             size="small"
             sx={{ width: '100%', maxWidth: 400 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
         </Box>
