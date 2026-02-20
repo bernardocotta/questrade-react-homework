@@ -20,8 +20,9 @@ import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied
 import { useFormik } from 'formik';
 import React, { useEffect } from 'react';
 import * as yup from 'yup';
-import { getLotteries, postLottery, postRegister } from './api';
+import { getLotteries, postRegister } from './api';
 import type { Lottery } from './api/types';
+import { AddLotteryModal } from './components/AddLotteryModal';
 import { LotteryCard } from './components/LotteryCard';
 
 const style = {
@@ -35,17 +36,6 @@ const style = {
   p: 4,
   borderRadius: 2,
 };
-
-const validationSchema = yup.object({
-  lotteryName: yup
-    .string()
-    .required('Required')
-    .min(4, 'At least 4 characters'),
-  lotteryPrize: yup
-    .string()
-    .required('Required')
-    .min(4, 'At least 4 characters'),
-});
 
 const registerValidationSchema = yup.object({
   registerName: yup
@@ -86,26 +76,6 @@ function App() {
   useEffect(() => {
     loadLotteries();
   }, [loadLotteries]);
-
-  const lotteryFormik = useFormik({
-    initialValues: { lotteryName: '', lotteryPrize: '' },
-    validationSchema,
-    validateOnMount: true,
-    onSubmit: async (values, { resetForm, setSubmitting }) => {
-      await postLottery({
-        name: values.lotteryName,
-        prize: values.lotteryPrize,
-        type: 'simple',
-      });
-      resetForm();
-      setNewLotteryModalOpen(false);
-      setSubmitting(false);
-      setOpenNewLotteryNotification(true);
-
-      setLoading(true);
-      await loadLotteries();
-    },
-  });
 
   const registerFormik = useFormik({
     initialValues: { registerName: '' },
@@ -210,65 +180,15 @@ function App() {
         )}
       </Box>
 
-      <Modal
+      <AddLotteryModal
         open={newLotteryModalOpen}
         onClose={() => setNewLotteryModalOpen(false)}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Stack spacing={2}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-              Add a new lottery
-            </Typography>
-            <TextField
-              label="Lottery name"
-              name="lotteryName"
-              value={lotteryFormik.values.lotteryName}
-              onChange={lotteryFormik.handleChange}
-              onBlur={lotteryFormik.handleBlur}
-              error={Boolean(
-                lotteryFormik.touched.lotteryName &&
-                lotteryFormik.errors.lotteryName,
-              )}
-              helperText={
-                lotteryFormik.touched.lotteryName &&
-                lotteryFormik.errors.lotteryName
-              }
-              variant="standard"
-              fullWidth
-            />
-            <TextField
-              label="Lottery prize"
-              name="lotteryPrize"
-              value={lotteryFormik.values.lotteryPrize}
-              onChange={lotteryFormik.handleChange}
-              onBlur={lotteryFormik.handleBlur}
-              error={Boolean(
-                lotteryFormik.touched.lotteryPrize &&
-                lotteryFormik.errors.lotteryPrize,
-              )}
-              helperText={
-                lotteryFormik.touched.lotteryPrize &&
-                lotteryFormik.errors.lotteryPrize
-              }
-              variant="standard"
-              fullWidth
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', pt: 1 }}>
-              <LoadingButton
-                variant="contained"
-                color="primary"
-                disabled={!lotteryFormik.isValid || !lotteryFormik.dirty}
-                loading={lotteryFormik.isSubmitting}
-                onClick={() => lotteryFormik.handleSubmit()}
-              >
-                Add
-              </LoadingButton>
-            </Box>
-          </Stack>
-        </Box>
-      </Modal>
+        onSuccess={() => {
+          setOpenNewLotteryNotification(true);
+          setLoading(true);
+          loadLotteries();
+        }}
+      />
 
       <Modal
         open={registerModalOpen}
